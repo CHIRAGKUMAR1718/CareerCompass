@@ -1,0 +1,18 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.pytest_cache/
+
+# Vector DB (regenerable via course_knowledge_base.py)
+course_vector_db/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS junk
+.DS_Store

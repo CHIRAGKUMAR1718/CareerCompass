@@ -1,0 +1,36 @@
+{
+  "train_r_squared": 0.8932429883519499,
+  "test_r_squared": 0.8931072417615937,
+  "test_mae": 2.169792030952219,
+  "test_rmse": 2.7451037402828593,
+  "coefficients": {
+    "Intercept": {
+      "value": 3.1684335499333063,
+      "p_value": 0.0
+    },
+    "C(company_size)[T.Mid-size]": {
+      "value": -2.8894952079463354,
+      "p_value": 0.0
+    },
+    "C(company_size)[T.Startup]": {
+      "value": -3.868256963573751,
+      "p_value": 0.0
+    },
+    "experience_years_mid": {
+      "value": 1.3384175842559767,
+      "p_value": 0.0
+    },
+    "n_high_value_skills": {
+      "value": 3.912808314776672,
+      "p_value": 0.0
+    },
+    "city_tier_ordinal": {
+      "value": 3.7750163435689164,
+      "p_value": 0.0
+    },
+    "remote_int": {
+      "value": -1.0340575297188672,
+      "p_value": 5.04260219315362e-144
+    }
+  }
+}

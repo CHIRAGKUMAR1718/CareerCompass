@@ -1,0 +1,132 @@
+{
+  "best_k": 8,
+  "silhouette_scores": {
+    "3": 0.2141,
+    "4": 0.2761,
+    "5": 0.3085,
+    "6": 0.3255,
+    "7": 0.3399,
+    "8": 0.3636
+  },
+  "clusters": {
+    "0": {
+      "size": 6761,
+      "avg_salary": 17.47,
+      "top_skills": [
+        "Excel",
+        "Statistics",
+        "SQL",
+        "Communication",
+        "Power BI"
+      ],
+      "dominant_job_titles": [
+        "Business Analyst",
+        "Product Manager",
+        "Data Analyst"
+      ]
+    },
+    "1": {
+      "size": 5082,
+      "avg_salary": 20.94,
+      "top_skills": [
+        "SQL",
+        "Python",
+        "AWS",
+        "Airflow",
+        "Docker"
+      ],
+      "dominant_job_titles": [
+        "Data Engineer",
+        "Backend Developer",
+        "Data Analyst"
+      ]
+    },
+    "2": {
+      "size": 2477,
+      "avg_salary": 16.15,
+      "top_skills": [
+        "HTML/CSS",
+        "JavaScript",
+        "TypeScript",
+        "React",
+        "Azure"
+      ],
+      "dominant_job_titles": [
+        "Frontend Developer"
+      ]
+    },
+    "3": {
+      "size": 2459,
+      "avg_salary": 14.64,
+      "top_skills": [
+        "Python",
+        "Manual Testing",
+        "Selenium",
+        "SQL",
+        "Azure"
+      ],
+      "dominant_job_titles": [
+        "QA Engineer"
+      ]
+    },
+    "4": {
+      "size": 5126,
+      "avg_salary": 22.73,
+      "top_skills": [
+        "AWS",
+        "Linux",
+        "Kubernetes",
+        "Docker",
+        "CI/CD"
+      ],
+      "dominant_job_titles": [
+        "DevOps Engineer",
+        "Cloud Engineer"
+      ]
+    },
+    "5": {
+      "size": 3072,
+      "avg_salary": 21.85,
+      "top_skills": [
+        "Python",
+        "Statistics",
+        "SQL",
+        "NLP",
+        "Deep Learning"
+      ],
+      "dominant_job_titles": [
+        "Data Scientist",
+        "Data Analyst"
+      ]
+    },
+    "6": {
+      "size": 2495,
+      "avg_salary": 17.5,
+      "top_skills": [
+        "System Design",
+        "Git",
+        "Python",
+        "Java",
+        "SQL"
+      ],
+      "dominant_job_titles": [
+        "Software Engineer"
+      ]
+    },
+    "7": {
+      "size": 2528,
+      "avg_salary": 28.44,
+      "top_skills": [
+        "Machine Learning",
+        "Deep Learning",
+        "MLOps",
+        "Python",
+        "Docker"
+      ],
+      "dominant_job_titles": [
+        "ML Engineer",
+        "Data Scientist"
+      ]
+    }
+  }
+}

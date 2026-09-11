@@ -1,0 +1,7 @@
+# CareerCompass — Environment Variables Template
+# Copy this file to ".env" and add your real key:
+#     cp .env.example .env
+#
+# NEVER commit the real ".env" file — it's already in .gitignore.
+
+GROQ_API_KEY=your_groq_api_key_here
