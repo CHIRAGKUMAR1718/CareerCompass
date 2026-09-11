@@ -245,10 +245,13 @@ with tab2:
         else:
             user_skills = [s.strip() for s in skills_input.split(",") if s.strip()]
 
-            with st.spinner("Analyzing market, matching skills, retrieving courses, and writing your roadmap..."):
+            with st.spinner("Loading models and connecting to services (first run takes longer)..."):
                 try:
+                    status_box = st.empty()
+                    status_box.info("Step 1/3: Loading embedding model + Qdrant + LLM client...")
                     roadmap_app = load_roadmap_resources()
 
+                    status_box.info("Step 2/3: Running pipeline (market analysis, skill-gap, retrieval)...")
                     initial_state = {
                         "user_skills": user_skills,
                         "target_role": target_role,
@@ -257,6 +260,7 @@ with tab2:
                         "roadmap_text": None,
                     }
                     result = roadmap_app.invoke(initial_state)
+                    status_box.empty()
 
                     # --- Readiness + skill breakdown ---
                     gap = result["gap_result"]

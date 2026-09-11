@@ -25,11 +25,24 @@ import numpy as np
 
 MATCH_THRESHOLD = 0.55  # isse zyada similarity ho to "match" maanenge
 
-HIGH_VALUE_SKILLS = {"Machine Learning", "Deep Learning", "AWS", "Kubernetes", "MLOps", "Spark"}
+
+def compute_skill_premium(df: pd.DataFrame, job_title: str, skill: str) -> float | None:
+    """Ek specific skill ka salary-premium, USI ROLE ke andar, DATA SE nikalta hai —
+    koi fixed/hardcoded list nahi. Har role ke liye alag premium ho sakta hai."""
+    role_df = df[df["job_title"] == job_title]
+    has_skill = role_df[role_df["skills_required"].str.contains(skill, regex=False)]
+    no_skill = role_df[~role_df["skills_required"].str.contains(skill, regex=False)]
+
+    # Agar kisi group me bahut kam samples hain, reliable estimate nahi mil sakta
+    if len(has_skill) < 15 or len(no_skill) < 15:
+        return None
+
+    return round(has_skill["salary_lpa"].mean() - no_skill["salary_lpa"].mean(), 2)
 
 
 def get_target_skills(df: pd.DataFrame, job_title: str, top_n: int = 8) -> list[dict]:
-    """Target-role ke liye, DATA SE, sabse zyada demand-wali skills nikalta hai."""
+    """Target-role ke liye, DATA SE, sabse zyada demand-wali skills nikalta hai —
+    aur HAR skill ka apna, DATA-DRIVEN salary-premium bhi (fixed-list nahi)."""
     role_df = df[df["job_title"] == job_title]
     all_skills = []
     for skills_str in role_df["skills_required"]:
@@ -38,10 +51,15 @@ def get_target_skills(df: pd.DataFrame, job_title: str, top_n: int = 8) -> list[
     skill_counts = pd.Series(all_skills).value_counts()
     top_skills = skill_counts.head(top_n)
 
-    return [
-        {"skill": skill, "demand_pct": round(count / len(role_df) * 100, 1)}
-        for skill, count in top_skills.items()
-    ]
+    results = []
+    for skill, count in top_skills.items():
+        premium = compute_skill_premium(df, job_title, skill)
+        results.append({
+            "skill": skill,
+            "demand_pct": round(count / len(role_df) * 100, 1),
+            "premium_lpa": premium,  # None agar reliable estimate nahi mila
+        })
+    return results
 
 
 def compute_skill_gap(user_skills: list[str], target_skills: list[dict], model) -> dict:
@@ -66,8 +84,7 @@ def compute_skill_gap(user_skills: list[str], target_skills: list[dict], model) 
                 "similarity": round(float(best_score), 3),
             })
         else:
-            is_high_value = target_info["skill"] in HIGH_VALUE_SKILLS
-            missing.append({**target_info, "is_high_value": is_high_value})
+            missing.append(target_info)  # already has 'premium_lpa' from get_target_skills
 
     readiness_pct = round(len(matched) / len(target_skills) * 100, 1) if target_skills else 0
 
@@ -78,18 +95,19 @@ def compute_skill_gap(user_skills: list[str], target_skills: list[dict], model) 
     }
 
 
-def estimate_salary_upside(missing_skills: list[dict], regression_coefs: dict) -> float:
-    """Regression-coefficients (Step 3) use karke, missing high-value-skills seekhne se
-    kitni salary badh sakti hai, estimate karta hai."""
-    n_high_value_missing = sum(1 for s in missing_skills if s.get("is_high_value"))
-    coef = regression_coefs.get("n_high_value_skills", {}).get("value", 0)
-    return round(n_high_value_missing * coef, 2)
+def estimate_salary_upside(missing_skills: list[dict]) -> float:
+    """Missing-skills ke DATA-DRIVEN premiums (get_target_skills se aaye) ko jod ke,
+    potential salary-upside estimate karta hai. Fixed-list/coefficient nahi —
+    har skill ka apna, us-role-specific, real premium use hota hai."""
+    total = sum(
+        s["premium_lpa"] for s in missing_skills
+        if s.get("premium_lpa") is not None and s["premium_lpa"] > 0
+    )
+    return round(total, 2)
 
 
 if __name__ == "__main__":
     df = pd.read_csv("job_postings.csv")
-    with open("regression_results.json") as f:
-        regression = json.load(f)
 
     print("Loading embedding model (all-MiniLM-L6-v2)...")
     model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -116,8 +134,8 @@ if __name__ == "__main__":
         print(f"  {m['skill']} (matched via '{m['matched_with']}', similarity={m['similarity']})")
     print("\n❌ Missing:")
     for m in gap["missing_skills"]:
-        flag = " [HIGH-VALUE]" if m["is_high_value"] else ""
-        print(f"  {m['skill']} (demand: {m['demand_pct']}%){flag}")
+        premium_text = f"premium: +₹{m['premium_lpa']}L" if m.get("premium_lpa") is not None and m["premium_lpa"] > 0 else "no reliable premium data"
+        print(f"  {m['skill']} (demand: {m['demand_pct']}%, {premium_text})")
 
-    upside = estimate_salary_upside(gap["missing_skills"], regression["coefficients"])
-    print(f"\n💰 Estimated salary upside if missing high-value skills are learned: +₹{upside}L")
+    upside = estimate_salary_upside(gap["missing_skills"])
+    print(f"\n💰 Estimated salary upside if missing skills are learned: +₹{upside}L")

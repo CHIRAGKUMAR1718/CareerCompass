@@ -46,7 +46,7 @@ sys.path.append(os.path.dirname(__file__))
 from skill_gap_engine import get_target_skills, compute_skill_gap, estimate_salary_upside
 from course_knowledge_base import find_course_for_skill
 
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 
 class RoadmapState(TypedDict):
@@ -63,18 +63,15 @@ class RoadmapState(TypedDict):
 _df = None
 _embed_model = None
 _qdrant_client = None
-_regression_coefs = None
 _llm_client = None
 
 
 def load_resources():
-    global _df, _embed_model, _qdrant_client, _regression_coefs, _llm_client
+    global _df, _embed_model, _qdrant_client, _llm_client
     print(">> Loading resources (dataset, embedding-model, Qdrant, LLM)...")
     _df = pd.read_csv("job_postings.csv")
     _embed_model = SentenceTransformer("all-MiniLM-L6-v2")
     _qdrant_client = QdrantClient(path="./course_vector_db")
-    with open("regression_results.json") as f:
-        _regression_coefs = json.load(f)["coefficients"]
     _llm_client = OpenAI(api_key=os.getenv("GROQ_API_KEY"), base_url="https://api.groq.com/openai/v1")
 
 
@@ -102,8 +99,8 @@ def course_retrieval_node(state: RoadmapState) -> RoadmapState:
 
 
 def salary_upside_node(state: RoadmapState) -> RoadmapState:
-    print(">> [Salary-Upside] Estimating potential salary increase...")
-    upside = estimate_salary_upside(state["gap_result"]["missing_skills"], _regression_coefs)
+    print(">> [Salary-Upside] Estimating potential salary increase (data-driven, per-role)...")
+    upside = estimate_salary_upside(state["gap_result"]["missing_skills"])
     return {**state, "salary_upside": upside}
 
 
@@ -113,6 +110,14 @@ def roadmap_generation_node(state: RoadmapState) -> RoadmapState:
     course_lines = []
     for skill, course in state["course_recommendations"].items():
         course_lines.append(f"- {skill}: \"{course['course_title']}\" on {course['platform']} ({course['url']})")
+
+    salary_note = (
+        f"ESTIMATED SALARY UPSIDE if high-value missing skills are learned: +Rs.{state['salary_upside']}L per annum"
+        if state["salary_upside"] > 0
+        else "NOTE: This role's core required skills don't include the 'high-value' skills tracked by this model "
+             "(Machine Learning, Deep Learning, AWS, Kubernetes, MLOps, Spark) — so skip mentioning a specific salary "
+             "number, and instead briefly note that closing the skill-gap still improves job-readiness and competitiveness."
+    )
 
     prompt = f"""You are a career advisor. Write a friendly, motivating, and CONCISE career roadmap
 in Markdown for a student, using ONLY the information below (do not invent courses or numbers).
@@ -125,11 +130,11 @@ ALREADY HAS THESE SKILLS: {[m['skill'] for m in state['gap_result']['matched_ski
 MISSING SKILLS AND THEIR VERIFIED COURSES:
 {chr(10).join(course_lines)}
 
-ESTIMATED SALARY UPSIDE if high-value missing skills are learned: +Rs.{state['salary_upside']}L per annum
+{salary_note}
 
 Structure with these sections: # Your Path to {state['target_role']}, ## Where You Stand,
 ## What To Learn Next (list each missing skill with its EXACT course link given above),
-## Why It's Worth It (mention the salary upside)."""
+## Why It's Worth It."""
 
     response = _llm_client.chat.completions.create(
         model="openai/gpt-oss-120b",
